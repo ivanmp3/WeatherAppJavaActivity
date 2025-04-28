@@ -1,21 +1,20 @@
-package com.example.weatherappjavaactivity.network; // ЗАМІНИ на свій пакет
+package com.example.weatherappjavaactivity.network;
 
-// Імпортуємо нову модель відповіді (створимо її далі)
-import com.example.weatherappjavaactivity.data.onecall.OneCallWeatherResponse;
+import com.example.weatherappjavaactivity.data.WeatherResponse;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
+/**
+ * OpenWeatherMap 5-day / 3-hour forecast endpoint
+ */
 public interface WeatherApiService {
 
-    // Змінюємо ендпоінт на One Call API 3.0
-    @GET("data/3.0/onecall")
-    Call<OneCallWeatherResponse> getOneCallForecast( // Новий метод та тип відповіді
-                                                     @Query("lat") double latitude,      // Параметр: широта
-                                                     @Query("lon") double longitude,     // Параметр: довгота
-                                                     @Query("appid") String apiKey,       // Параметр: API ключ
-                                                     @Query("exclude") String exclude,    // Параметр: що виключити (напр., "minutely,hourly,alerts")
-                                                     @Query("units") String units,        // Параметр: одиниці виміру (metric)
-                                                     @Query("lang") String lang           // Параметр: мова відповіді (uk)
+    @GET("data/2.5/forecast")
+    Call<WeatherResponse> getWeatherForecast(
+            @Query("q") String city,       // city name, e.g. "Odesa,UA"
+            @Query("appid") String apiKey, // your API key
+            @Query("units") String units,  // "metric" or "imperial"
+            @Query("lang") String lang     // e.g. "uk", "en"
     );
 }

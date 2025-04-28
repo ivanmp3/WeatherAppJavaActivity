@@ -10,47 +10,67 @@
 
     <LinearLayout
         android:orientation="vertical"
-        android:padding="16dp"
         android:gravity="center_horizontal"
+        android:padding="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <!-- Иконка погоды -->
         <ImageView
             android:id="@+id/ivWeatherIcon"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:contentDescription="@string/weather_icon"/>
 
+        <!-- Дата и время -->
         <TextView
             android:id="@+id/tvDateTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
             android:layout_marginTop="8dp"/>
 
+        <!-- Температура -->
         <TextView
             android:id="@+id/tvTemperatureValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:layout_marginTop="4dp"/>
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="6dp"/>
 
+        <!-- Скорость ветра -->
         <TextView
             android:id="@+id/tvWindValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
             android:layout_marginTop="4dp"/>
 
+        <!-- Давление -->
         <TextView
             android:id="@+id/tvPressureValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
             android:layout_marginTop="4dp"/>
 
+        <!-- Описание -->
         <TextView
             android:id="@+id/tvDescription"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:textColor="@android:color/black"
             android:layout_marginTop="4dp"/>
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

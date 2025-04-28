@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WeatherAppJavaActivity</string>
+    <!-- used as contentDescription on your weather icons -->
+    <string name="weather_icon">Weather icon</string>
 </resources>
