@@ -8,10 +8,14 @@ import androidx.recyclerview.widget.RecyclerView; // Імпорт RecyclerView
 import android.os.Bundle;
 import android.view.View; // Імпорт View для керування видимістю
 // Імпорти твоїх класів:
+import com.example.weatherappjavaactivity.data.ForecastItem;
+import com.example.weatherappjavaactivity.data.onecall.DailyForecast;
 import com.example.weatherappjavaactivity.databinding.ActivityMainBinding; // Імпорт згенерованого Binding
 import com.example.weatherappjavaactivity.ui.WeatherAdapter;
 import com.example.weatherappjavaactivity.ui.WeatherUiState;
 import com.example.weatherappjavaactivity.ui.WeatherViewModel;
+
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -55,41 +59,66 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Метод для спостереження за LiveData з ViewModel
+    // --- ПОВНІСТЮ ПЕРЕПИСАНИЙ МЕТОД observeViewModel ---
     private void observeViewModel() {
-        // Отримуємо LiveData зі станом UI з ViewModel і підписуємося на її зміни
-        // `this` - власник життєвого циклу (MainActivity), спостереження буде активним, поки Activity жива
-        // `state -> { ... }` - лямбда-вираз (Observer), який буде викликатися при кожній зміні стану
+        // Отримуємо LiveData об'єкт зі стану UI з ViewModel.
+        // viewModel.getWeatherState() повертає LiveData<WeatherUiState>.
+        // Метод observe() приймає LifecycleOwner (в даному випадку Activity - this)
+        // та Observer (реалізований тут як лямбда-вираз).
         viewModel.getWeatherState().observe(this, state -> {
-            // Перевіряємо тип поточного стану UI
+            // Цей блок коду виконується щоразу, коли дані в LiveData змінюються.
+            // 'state' - це поточний об'єкт WeatherUiState.
+
+            // Використовуємо instanceof для визначення конкретного типу стану.
+
             if (state instanceof WeatherUiState.Loading) {
-                // Стан завантаження: показуємо ProgressBar, ховаємо список і помилку
+                // Стан: Завантаження даних
+                // Показуємо індикатор прогресу.
                 binding.progressBar.setVisibility(View.VISIBLE);
+                // Ховаємо текст помилки (якщо він був видимий).
                 binding.tvError.setVisibility(View.GONE);
+                // Ховаємо список (RecyclerView).
                 binding.rvWeatherForecast.setVisibility(View.GONE);
 
             } else if (state instanceof WeatherUiState.Success) {
-                // Стан успіху: ховаємо ProgressBar і помилку, показуємо список
+                // Стан: Дані успішно завантажені
+                // Ховаємо індикатор прогресу.
                 binding.progressBar.setVisibility(View.GONE);
+                // Ховаємо текст помилки.
                 binding.tvError.setVisibility(View.GONE);
+                // Показуємо список (RecyclerView).
                 binding.rvWeatherForecast.setVisibility(View.VISIBLE);
 
-                // Отримуємо список прогнозу зі стану Success
-                // Потрібно явно привести тип state до WeatherUiState.Success
+                // Оскільки ми впевнені, що 'state' має тип WeatherUiState.Success,
+                // ми можемо безпечно привести (cast) його до цього типу.
                 WeatherUiState.Success successState = (WeatherUiState.Success) state;
-                // Передаємо отриманий список в адаптер для відображення
-                weatherAdapter.submitList(successState.getForecastList());
+
+                // Отримуємо список денних прогнозів з об'єкта стану.
+                // Метод getForecastList() повертає List<DailyForecast>.
+                List<ForecastItem> forecastList = successState.getForecastList();
+
+                // Передаємо отриманий список до нашого адаптера RecyclerView.
+                // Адаптер оновить відображення на основі нових даних.
+                weatherAdapter.submitList(forecastList);
 
             } else if (state instanceof WeatherUiState.Error) {
-                // Стан помилки: ховаємо ProgressBar і список, показуємо повідомлення про помилку
+                // Стан: Сталася помилка під час завантаження даних
+                // Ховаємо індикатор прогресу.
                 binding.progressBar.setVisibility(View.GONE);
+                // Ховаємо список (RecyclerView).
                 binding.rvWeatherForecast.setVisibility(View.GONE);
+                // Показуємо текстове поле для помилки.
                 binding.tvError.setVisibility(View.VISIBLE);
 
-                // Отримуємо повідомлення про помилку зі стану Error
+                // Приводимо 'state' до типу WeatherUiState.Error, щоб отримати повідомлення.
                 WeatherUiState.Error errorState = (WeatherUiState.Error) state;
-                // Встановлюємо текст помилки у відповідний TextView
-                binding.tvError.setText(errorState.getMessage());
+
+                // Отримуємо текст повідомлення про помилку.
+                String errorMessage = errorState.getMessage();
+
+                // Встановлюємо отримане повідомлення в TextView.
+                binding.tvError.setText(errorMessage);
             }
         });
     }
-}
+    }

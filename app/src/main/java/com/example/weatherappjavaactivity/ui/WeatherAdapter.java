@@ -5,8 +5,15 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+// Імпорт Glide
+import com.bumptech.glide.Glide;
+
+// Імпортуємо НОВУ модель даних
 import com.example.weatherappjavaactivity.data.ForecastItem;
-import com.example.weatherappjavaactivity.databinding.ListItemWeatherBinding; // Важливо: імпортуємо згенерований Binding клас
+import com.example.weatherappjavaactivity.data.onecall.DailyForecast;
+import com.example.weatherappjavaactivity.data.onecall.WeatherDescription;
+// Імпортуємо Binding для НОВОГО макету
+import com.example.weatherappjavaactivity.databinding.ListItemWeatherBinding;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,106 +21,104 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+// Змінюємо тип списку на DailyForecast
 public class WeatherAdapter extends RecyclerView.Adapter<WeatherAdapter.WeatherViewHolder> {
 
-    // Список для зберігання даних прогнозу
-    private List<ForecastItem> forecastList = new ArrayList<>();
+    private List<DailyForecast> forecastList = new ArrayList<>();
 
     // --- ViewHolder ---
-    // Внутрішній клас, що представляє один елемент списку (один рядок)
     public static class WeatherViewHolder extends RecyclerView.ViewHolder {
-        // Використовуємо ViewBinding для доступу до View елементів макету
-        private final ListItemWeatherBinding binding;
+        private final ListItemWeatherBinding binding; // Використовуємо той самий Binding
 
-        // Конструктор ViewHolder
         public WeatherViewHolder(@NonNull ListItemWeatherBinding binding) {
-            super(binding.getRoot()); // Передаємо корінний View до батьківського конструктора
-            this.binding = binding;   // Зберігаємо binding для подальшого використання
+            super(binding.getRoot());
+            this.binding = binding;
         }
 
-        // Метод для заповнення View елементів даними з об'єкта ForecastItem
-        public void bind(ForecastItem item) {
-            // Встановлюємо текст для кожного TextView, використовуючи дані з item
-            binding.tvDateTime.setText(formatDateTime(item.getDateTimeUnix()));
+        // Метод bind тепер приймає DailyForecast
+        public void bind(DailyForecast item) {
+            // Встановлюємо дату (тільки день тижня і число/місяць буде доречніше)
+            binding.tvDateTime.setText(formatDateOnly(item.getDt()));
 
-            // Форматуємо та встановлюємо температуру (округлюємо до цілого)
+            // Встановлюємо температуру (Макс/Мін)
             binding.tvTemperatureValue.setText(
-                    String.format(Locale.getDefault(), "%.0f °C", item.getMain().getTemperature())
+                    String.format(Locale.getDefault(), "%.0f°C / %.0f°C",
+                            item.getTemp().getMax(), item.getTemp().getMin())
             );
-            // Форматуємо та встановлюємо швидкість вітру (округлюємо до цілого)
+            // Встановлюємо швидкість вітру
             binding.tvWindValue.setText(
-                    String.format(Locale.getDefault(), "%.0f м/с", item.getWind().getSpeed())
+                    String.format(Locale.getDefault(), "%.0f м/с", item.getWindSpeed())
             );
-            // Форматуємо та встановлюємо тиск (округлюємо до цілого)
+            // Встановлюємо тиск
             binding.tvPressureValue.setText(
-                    String.format(Locale.getDefault(), "%.0f гПа", item.getMain().getPressure())
+                    String.format(Locale.getDefault(), "%d гПа", item.getPressure())
             );
 
-            // Отримуємо та встановлюємо опис погоди
-            String description = "N/A"; // Значення за замовчуванням
-            // Перевіряємо наявність опису
-            if (item.getWeather() != null && !item.getWeather().isEmpty() && item.getWeather().get(0).getDescription() != null) {
-                String rawDescription = item.getWeather().get(0).getDescription();
-                // Робимо першу літеру великою (для краси)
-                description = rawDescription.substring(0, 1).toUpperCase(Locale.getDefault()) + rawDescription.substring(1);
+            // Отримуємо опис та іконку
+            String description = "N/A";
+            String iconCode = null;
+            if (item.getWeather() != null && !item.getWeather().isEmpty()) {
+                WeatherDescription weatherDesc = item.getWeather().get(0);
+                if (weatherDesc.getDescription() != null){
+                    String rawDescription = weatherDesc.getDescription();
+                    description = rawDescription.substring(0, 1).toUpperCase(Locale.getDefault()) + rawDescription.substring(1);
+                }
+                iconCode = weatherDesc.getIcon(); // Отримуємо код іконки (напр., "01d")
             }
             binding.tvDescription.setText(description);
+
+            // --- ЗАВАНТАЖЕННЯ ІКОНКИ З GLIDE ---
+            if (iconCode != null) {
+                String iconUrl = "https://openweathermap.org/img/wn/" + iconCode + "@2x.png"; // Формуємо URL іконки
+                Glide.with(binding.ivWeatherIcon.getContext()) // Контекст беремо з будь-якого View всередині ViewHolder
+                        .load(iconUrl) // Завантажуємо URL
+                        .placeholder(R.mipmap.ic_launcher) // Опціонально: Placeholder поки вантажиться
+                        .error(R.mipmap.ic_launcher_round) // Опціонально: Картинка якщо помилка завантаження
+                        .into(binding.ivWeatherIcon); // В який ImageView завантажити
+            } else {
+                // Якщо коду іконки немає, можна показати стандартну картинку або сховати ImageView
+                binding.ivWeatherIcon.setImageResource(R.mipmap.ic_launcher_round); // Наприклад
+            }
+            // ----------------------------------
         }
 
-        // Допоміжний метод для форматування Unix timestamp у читабельний рядок дати/часу
-        private String formatDateTime(long unixTimestamp) {
+        // Форматуємо тільки дату (без часу)
+        private String formatDateOnly(long unixTimestamp) {
             try {
-                // Unix timestamp в секундах, Date працює з мілісекундами
                 Date date = new Date(unixTimestamp * 1000L);
-                // Створюємо форматтер для української локалі (наприклад, "Сб, 19 Кві 18:00")
-                SimpleDateFormat sdf = new SimpleDateFormat("E, dd MMM HH:mm", new Locale("uk", "UA"));
+                // Формат: Наприклад, "Сб, 19 Квітня"
+                SimpleDateFormat sdf = new SimpleDateFormat("E, dd MMMM", new Locale("uk", "UA"));
                 return sdf.format(date);
             } catch (Exception e) {
-                // Обробка можливої помилки форматування
                 return "Невірна дата";
             }
         }
     }
     // --- Кінець ViewHolder ---
 
+    // Методи onCreateViewHolder, onBindViewHolder, getItemCount залишаються структурно такими ж
 
-    // --- Методи RecyclerView.Adapter ---
-
-    // Створює новий екземпляр ViewHolder (викликається LayoutManager'ом)
     @NonNull
     @Override
     public WeatherViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Створюємо LayoutInflater з контексту батьківського елемента
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        // "Надуваємо" (створюємо) View Binding для нашого макету елемента списку
         ListItemWeatherBinding binding = ListItemWeatherBinding.inflate(inflater, parent, false);
-        // Створюємо та повертаємо новий екземпляр ViewHolder
         return new WeatherViewHolder(binding);
     }
 
-    // Заповнює ViewHolder даними для конкретної позиції (викликається LayoutManager'ом)
     @Override
     public void onBindViewHolder(@NonNull WeatherViewHolder holder, int position) {
-        // Отримуємо об'єкт ForecastItem для поточної позиції
-        ForecastItem currentItem = forecastList.get(position);
-        // Викликаємо метод bind у ViewHolder для заповнення View
-        holder.bind(currentItem);
+        holder.bind(forecastList.get(position)); // Передаємо DailyForecast
     }
 
-    // Повертає загальну кількість елементів у списку (викликається LayoutManager'ом)
     @Override
     public int getItemCount() {
-        // Повертаємо розмір списку (або 0, якщо список null)
         return forecastList == null ? 0 : forecastList.size();
     }
 
-    // Метод для оновлення даних в адаптері
+    // Метод submitList тепер приймає List<DailyForecast>
     public void submitList(List<ForecastItem> list) {
-        this.forecastList = list; // Оновлюємо внутрішній список
-        notifyDataSetChanged(); // Повідомляємо RecyclerView, що весь набір даних змінився
-        // Для великих списків краще використовувати DiffUtil,
-        // але для простоти тут використовуємо notifyDataSetChanged().
+        this.forecastList = list;
+        notifyDataSetChanged();
     }
-    // --- Кінець методів RecyclerView.Adapter ---
 }
-

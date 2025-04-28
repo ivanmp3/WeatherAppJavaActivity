@@ -1,90 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:layout_marginBottom="8dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
 
-    <TextView
-        android:id="@+id/tvDateTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:text="Дата і час" />
-
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/ivWeatherIcon"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@mipmap/ic_launcher" /> <TextView
+        android:id="@+id/tvDateTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/ivWeatherIcon"
+        android:text="Дата Placeholder" />
+
         <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvDateTime"
+            app:layout_constraintEnd_toStartOf="@id/ivWeatherIcon"
+            android:text="Опис Placeholder"/>
+
+        <TextView
+            android:id="@+id/tvTemperatureLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Температура: "
-            android:textSize="20sp"/>
+            android:layout_marginTop="8dp"
+            android:text="Темп (макс/мін):"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvDescription"/>
+
         <TextView
             android:id="@+id/tvTemperatureValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 °C"
-            android:textSize="20sp"/>
-    </LinearLayout>
+            android:textStyle="bold"
+            android:layout_marginStart="8dp"
+            app:layout_constraintStart_toEndOf="@id/tvTemperatureLabel"
+            app:layout_constraintTop_toTopOf="@id/tvTemperatureLabel"
+            app:layout_constraintBottom_toBottomOf="@id/tvTemperatureLabel"
+            android:text="0°C / 0°C"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp">
         <TextView
+            android:id="@+id/tvWindLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Вітер: "
-            android:textSize="20sp"/>
+            android:layout_marginTop="4dp"
+            android:text="Вітер:"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTemperatureLabel"/>
+
         <TextView
             android:id="@+id/tvWindValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 м/с"
-            android:textSize="20sp"/>
-    </LinearLayout>
+            android:textStyle="bold"
+            android:layout_marginStart="8dp"
+            app:layout_constraintStart_toEndOf="@id/tvWindLabel"
+            app:layout_constraintTop_toTopOf="@id/tvWindLabel"
+            app:layout_constraintBottom_toBottomOf="@id/tvWindLabel"
+            android:text="0 м/с"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp">
         <TextView
+            android:id="@+id/tvPressureLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Тиск: "
-            android:textSize="20sp"/>
+            android:layout_marginTop="4dp"
+            android:text="Тиск:"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvWindLabel"/>
+
         <TextView
             android:id="@+id/tvPressureValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 гПа"
-            android:textSize="20sp"/>
-    </LinearLayout>
+            android:textStyle="bold"
+            android:layout_marginStart="8dp"
+            app:layout_constraintStart_toEndOf="@id/tvPressureLabel"
+            app:layout_constraintTop_toTopOf="@id/tvPressureLabel"
+            app:layout_constraintBottom_toBottomOf="@id/tvPressureLabel"
+            android:text="0 гПа"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Опис: "
-            android:textSize="20sp"/>
-        <TextView
-            android:id="@+id/tvDescription"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ясно"
-            android:textSize="20sp"/>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</LinearLayout>
+</androidx.cardview.widget.CardView>

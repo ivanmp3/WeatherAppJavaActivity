@@ -55,6 +55,12 @@ dependencies {
     // ViewModel & LiveData (Java версії)
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.7.0") // Перевір останню версію
     implementation("androidx.lifecycle:lifecycle-livedata:2.7.0") // Перевір останню версію
+    // --- ДОДАЙ ЦІ ЗАЛЕЖНОСТІ ---
+    // CardView
+    implementation("androidx.cardview:cardview:1.0.0") // Стандартна бібліотека CardView
+
+    // Glide (для завантаження зображень)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
     // implementation("androidx.lifecycle:lifecycle-common-java8:2.7.0") // Опціонально
 
     // Опціонально: Glide для іконок
