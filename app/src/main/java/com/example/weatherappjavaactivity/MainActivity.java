@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Отримуємо список денних прогнозів з об'єкта стану.
                 // Метод getForecastList() повертає List<DailyForecast>.
-                List<ForecastItem> forecastList = successState.getForecastList();
+                List<DailyForecast> forecastList = successState.getForecastList();
 
                 // Передаємо отриманий список до нашого адаптера RecyclerView.
                 // Адаптер оновить відображення на основі нових даних.

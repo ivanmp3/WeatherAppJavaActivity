@@ -4,87 +4,77 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-// Імпортуємо НОВІ моделі даних
-import com.example.weatherappjavaactivity.data.onecall.DailyForecast;
-import com.example.weatherappjavaactivity.data.onecall.OneCallWeatherResponse;
+// Імпорти для СТАРИХ моделей і UiState, що працює з ForecastItem
+import com.example.weatherappjavaactivity.data.ForecastItem;
+import com.example.weatherappjavaactivity.data.WeatherResponse;
 import com.example.weatherappjavaactivity.network.RetrofitInstance;
 import com.example.weatherappjavaactivity.network.WeatherApiService;
 
+import java.util.ArrayList; // Потрібен для створення нового списку
 import java.util.List;
-import java.util.stream.Collectors; // Для take(7)
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// Клас WeatherUiState залишається майже таким же, але Success приймає List<DailyForecast>
-public abstract class WeatherUiState {
-    private WeatherUiState() {}
-    public static final class Loading extends WeatherUiState {}
-    public static final class Success extends WeatherUiState {
-        // Змінюємо тип списку на DailyForecast
-        private final List<DailyForecast> forecastList;
-        public Success(List<DailyForecast> list) { this.forecastList = list; }
-        public List<DailyForecast> getForecastList() { return forecastList; }
-    }
-    public static final class Error extends WeatherUiState {
-        private final String message;
-        public Error(String msg) { this.message = msg; }
-        public String getMessage() { return message; }
-    }
-}
-
-
 public class WeatherViewModel extends ViewModel {
 
-    private final String apiKey = "YOUR_API_KEY"; // !!! ЗНОВУ ПЕРЕВІР СВІЙ КЛЮЧ !!!
+    private final String apiKey = "YOUR_API_KEY"; // !!! НЕ ЗАБУДЬ СВІЙ КЛЮЧ !!!
 
-    // Змінюємо тип MutableLiveData для відповідності новому Success стану
+    // LiveData тепер знову працює з WeatherUiState<ForecastItem> (неявно через Success)
     private final MutableLiveData<WeatherUiState> _weatherState = new MutableLiveData<>();
-    public LiveData<WeatherUiState> getWeatherState() { return _weatherState; }
+    public LiveData<WeatherUiState> getWeatherState() {
+        return _weatherState;
+    }
 
     private final WeatherApiService apiService;
 
     public WeatherViewModel() {
         apiService = RetrofitInstance.getApiService();
-        // Координати Одеси (приклад)
-        double latitude = 46.4825;
-        double longitude = 30.7233;
-        fetchWeatherForecast(latitude, longitude);
+        // Викликаємо старий метод з назвою міста
+        fetchWeatherForecast("Odesa,UA"); // Або інше місто
     }
 
-    // Метод тепер приймає координати
-    public void fetchWeatherForecast(double lat, double lon) {
+    // Метод для завантаження 5-денного прогнозу
+    public void fetchWeatherForecast(String city) { // Приймає місто
         _weatherState.setValue(new WeatherUiState.Loading());
 
-        // Параметр exclude, щоб не отримувати зайві дані
-        String exclude = "minutely,hourly,current,alerts";
-        // Викликаємо НОВИЙ метод API сервісу
-        Call<OneCallWeatherResponse> call = apiService.getOneCallForecast(
-                lat, lon, apiKey, exclude, "metric", "uk"
-        );
+        // Викликаємо метод getWeatherForecast зі СТАРОГО WeatherApiService
+        Call<WeatherResponse> call = apiService.getWeatherForecast(city, apiKey, "metric", "uk");
 
-        call.enqueue(new Callback<OneCallWeatherResponse>() {
+        call.enqueue(new Callback<WeatherResponse>() {
             @Override
-            public void onResponse(Call<OneCallWeatherResponse> call, Response<OneCallWeatherResponse> response) {
+            public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Отримуємо список денних прогнозів
-                    List<DailyForecast> dailyItems = response.body().getDaily();
-                    if (dailyItems != null && !dailyItems.isEmpty()) {
-                        // Беремо перші 7 днів (API може повернути 8)
-                        List<DailyForecast> weeklyForecast = dailyItems.stream().limit(7).collect(Collectors.toList());
-                        _weatherState.setValue(new WeatherUiState.Success(weeklyForecast));
+                    // Отримуємо список ForecastItem
+                    List<ForecastItem> allItems = response.body().getList();
+                    if (allItems != null && !allItems.isEmpty()) {
+                        // --- Фільтрація для отримання денних даних ---
+                        List<ForecastItem> filteredList = new ArrayList<>();
+                        for (int i = 0; i < allItems.size(); i += 8) { // Беремо кожен 8-й запис (раз на 24 години)
+                            filteredList.add(allItems.get(i));
+                            if (filteredList.size() >= 5) { // Обмежуємо 5 днями (максимум, що дає API)
+                                break;
+                            }
+                        }
+                        // -----------------------------------------
+                        if (!filteredList.isEmpty()){
+                            // Оновлюємо стан з відфільтрованим списком ForecastItem
+                            _weatherState.setValue(new WeatherUiState.Success(filteredList));
+                        } else {
+                            _weatherState.setValue(new WeatherUiState.Error("Не вдалося відфільтрувати дані"));
+                        }
                     } else {
-                        _weatherState.setValue(new WeatherUiState.Error("Отримано пустий денний прогноз"));
+                        _weatherState.setValue(new WeatherUiState.Error("Отримана пуста відповідь від сервера (5-day)"));
                     }
                 } else {
-                    _weatherState.setValue(new WeatherUiState.Error("Помилка сервера OneCall: " + response.code() + " " + response.message()));
+                    _weatherState.setValue(new WeatherUiState.Error("Помилка сервера (5-day): " + response.code() + " " + response.message()));
                 }
             }
 
             @Override
-            public void onFailure(Call<OneCallWeatherResponse> call, Throwable t) {
-                _weatherState.setValue(new WeatherUiState.Error("Помилка мережі OneCall: " + t.getMessage()));
+            public void onFailure(Call<WeatherResponse> call, Throwable t) {
+                _weatherState.setValue(new WeatherUiState.Error("Помилка мережі (5-day): " + t.getMessage()));
             }
         });
     }

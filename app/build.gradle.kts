@@ -22,9 +22,9 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    compileOptions { // Важливо для Java 8
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17 // Було VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_17 // Було VERSION_1_8
     }
     // Включаємо View Binding
     buildFeatures {
