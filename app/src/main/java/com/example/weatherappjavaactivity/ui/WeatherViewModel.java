@@ -4,14 +4,15 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-// Імпорти для СТАРИХ моделей і UiState, що працює з ForecastItem
 import com.example.weatherappjavaactivity.data.ForecastItem;
 import com.example.weatherappjavaactivity.data.WeatherResponse;
 import com.example.weatherappjavaactivity.network.RetrofitInstance;
 import com.example.weatherappjavaactivity.network.WeatherApiService;
 
-import java.util.ArrayList; // Потрібен для створення нового списку
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -19,9 +20,10 @@ import retrofit2.Response;
 
 public class WeatherViewModel extends ViewModel {
 
-    private final String apiKey = "YOUR_API_KEY"; // !!! НЕ ЗАБУДЬ СВІЙ КЛЮЧ !!!
+    // Ваш API ключ
+    private final String apiKey = "16007cf6e5b4229927ec316ffda5427b";
 
-    // LiveData тепер знову працює з WeatherUiState<ForecastItem> (неявно через Success)
+    // LiveData для стану UI
     private final MutableLiveData<WeatherUiState> _weatherState = new MutableLiveData<>();
     public LiveData<WeatherUiState> getWeatherState() {
         return _weatherState;
@@ -31,50 +33,56 @@ public class WeatherViewModel extends ViewModel {
 
     public WeatherViewModel() {
         apiService = RetrofitInstance.getApiService();
-        // Викликаємо старий метод з назвою міста
-        fetchWeatherForecast("Odesa,UA"); // Або інше місто
+        // За замовчуванням Одеса
+        fetchWeatherForecast("Odesa,UA");
     }
 
-    // Метод для завантаження 5-денного прогнозу
-    public void fetchWeatherForecast(String city) { // Приймає місто
+    public void fetchWeatherForecast(String city) {
         _weatherState.setValue(new WeatherUiState.Loading());
 
-        // Викликаємо метод getWeatherForecast зі СТАРОГО WeatherApiService
         Call<WeatherResponse> call = apiService.getWeatherForecast(city, apiKey, "metric", "uk");
-
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Отримуємо список ForecastItem
                     List<ForecastItem> allItems = response.body().getList();
                     if (allItems != null && !allItems.isEmpty()) {
-                        // --- Фільтрація для отримання денних даних ---
-                        List<ForecastItem> filteredList = new ArrayList<>();
-                        for (int i = 0; i < allItems.size(); i += 8) { // Беремо кожен 8-й запис (раз на 24 години)
-                            filteredList.add(allItems.get(i));
-                            if (filteredList.size() >= 5) { // Обмежуємо 5 днями (максимум, що дає API)
-                                break;
+                        // Групуємо за датами та беремо до 4 днів по 4 інтервали кожен
+                        Map<String, List<ForecastItem>> dailyMap = new LinkedHashMap<>();
+                        for (ForecastItem item : allItems) {
+                            String date = item.getDateTimeText().substring(0, 10); // YYYY-MM-DD
+                            // Якщо вже зібрано 4 дні — виходимо
+                            if (!dailyMap.containsKey(date) && dailyMap.size() == 4) break;
+                            // Ініціалізуємо список для дати
+                            dailyMap.computeIfAbsent(date, k -> new ArrayList<>());
+                            List<ForecastItem> dayList = dailyMap.get(date);
+                            // Додаємо до 4 прогнозів на день
+                            if (dayList.size() < 4) {
+                                dayList.add(item);
                             }
                         }
-                        // -----------------------------------------
-                        if (!filteredList.isEmpty()){
-                            // Оновлюємо стан з відфільтрованим списком ForecastItem
-                            _weatherState.setValue(new WeatherUiState.Success(filteredList));
+                        // Об'єднуємо в один список
+                        List<ForecastItem> result = new ArrayList<>();
+                        for (List<ForecastItem> dayList : dailyMap.values()) {
+                            result.addAll(dayList);
+                        }
+                        if (!result.isEmpty()) {
+                            _weatherState.setValue(new WeatherUiState.Success(result));
                         } else {
-                            _weatherState.setValue(new WeatherUiState.Error("Не вдалося відфільтрувати дані"));
+                            _weatherState.setValue(new WeatherUiState.Error("Не знайдено прогнозів"));
                         }
                     } else {
-                        _weatherState.setValue(new WeatherUiState.Error("Отримана пуста відповідь від сервера (5-day)"));
+                        _weatherState.setValue(new WeatherUiState.Error("Отримана пуста відповідь від сервера"));
                     }
                 } else {
-                    _weatherState.setValue(new WeatherUiState.Error("Помилка сервера (5-day): " + response.code() + " " + response.message()));
+                    _weatherState.setValue(new WeatherUiState.Error(
+                            "Помилка сервера: " + response.code() + " " + response.message()));
                 }
             }
 
             @Override
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
-                _weatherState.setValue(new WeatherUiState.Error("Помилка мережі (5-day): " + t.getMessage()));
+                _weatherState.setValue(new WeatherUiState.Error("Помилка мережі: " + t.getMessage()));
             }
         });
     }

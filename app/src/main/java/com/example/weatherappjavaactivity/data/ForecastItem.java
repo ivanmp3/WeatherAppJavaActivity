@@ -17,6 +17,7 @@ public class ForecastItem {
     @SerializedName("weather")
     private List<WeatherInfo> weather;
 
+
     // "wind" - об'єкт з інформацією про вітер
     @SerializedName("wind")
     private WindInfo wind;
